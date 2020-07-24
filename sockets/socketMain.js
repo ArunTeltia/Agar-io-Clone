@@ -90,13 +90,25 @@ io.sockets.on('connect', (socket) => {
                 console.log('player collision')
                 // every socket need to know the leaderboard has changed
                 io.sockets.emit('updateLeaderBoard', getLeaderBoard());
+                //a player was absorbed lets everyone know
+                io.sockets.emit('playerDeath', data);
+
             }).catch(() => {
                 // console.log("player not collide");
             })
         }
     })
     socket.on('disconnect', (data) => {
+        if (player.playerData) {
+            players.forEach((curPlayer) => {
+                if (curPlayer.uid == player.playerData.uid) {
+                    // these are the droids we are looking for
+                    players.splice(i, 1);
+                    io.sockets.emit('updateLeaderBoard', getLeaderBoard());
+                }
+            })
 
+        }
     })
 })
 function getLeaderBoard() {

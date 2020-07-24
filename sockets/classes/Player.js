@@ -1,3 +1,4 @@
+
 class Player {
     constructor(socketId, playerConfig, playerData) {
         this.socketId = socketId;
