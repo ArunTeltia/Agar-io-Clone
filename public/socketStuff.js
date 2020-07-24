@@ -19,6 +19,11 @@ socket.on('initReturn', (data) => {
 socket.on('tock', (data) => {
     console.log(data)
     players = data.players,
-    player.locX = data.playerX,
-    player.locY = data.playerY
+        player.locX = data.playerX,
+        player.locY = data.playerY
+})
+
+socket.on('orbSwitch', (data) => {
+    console.log(data)
+    orbs.splice(data.orbIndex, 1, data.newOrb)
 })
