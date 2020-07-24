@@ -19,6 +19,7 @@ $('.name-form').submit((event) => {
     player.name = document.querySelector('#name-input').value;
     $('#loginModal').modal('hide');
     $('#spawnModal').modal('show')
+    console.log(document.querySelector('.player-name'))
     document.querySelector('.player-name').innerHTML = player.name
 })
 
