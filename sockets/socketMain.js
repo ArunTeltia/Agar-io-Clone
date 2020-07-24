@@ -7,6 +7,7 @@ const Player = require("./classes/Player");
 const PlayerConfig = require("./classes/PlayerConfig");
 const PlayerData = require("./classes/PlayerData")
 const Orb = require('./classes/Orb');
+const { get } = require('../expressStuff/expressMain');
 let orbs = []
 let players = []
 let settings = {
@@ -20,7 +21,13 @@ let settings = {
 }
 initGame();
 // issue a message to every connected 30 fps
-
+setInterval(() => {
+    if (players.length > 0) {
+        io.to('game').emit('tock', {
+            players,
+        })
+    }
+}, 33)
 io.sockets.on('connect', (socket) => {
     let player = {};
     socket.on('init', (data => {
@@ -30,14 +37,13 @@ io.sockets.on('connect', (socket) => {
         let playerData = new PlayerData(data.playerName, settings);
         console.log(playerData.locX)
         player = new Player(socket.id, playerConfig, playerData);
-
         setInterval(() => {
-            io.to('game').emit('tock', {
-                players,
+            socket.emit('tickTock', {
                 playerX: player.playerData.locX,
                 playerY: player.playerData.locY
             })
         }, 33)
+
 
         socket.emit('initReturn', {
             orbs
@@ -63,23 +69,48 @@ io.sockets.on('connect', (socket) => {
             let capturedOrb = checkForOrbCollisions(player.playerData, player.playerConfig, orbs, settings)
             capturedOrb.then((data) => {
                 //if collision happens 
-                // console.log('Orb collision')
+                console.log('Orb collision')
                 // emit to all sockets the orbs replace
                 const orbData = {
                     orbIndex: data,
                     newOrb: orbs[data]
                 }
+                // every socket need to know the leaderboard has changed
+                io.sockets.emit('updateLeaderBoard', getLeaderBoard());
                 io.sockets.emit('orbSwitch', orbData);
             }).catch(() => {
-                //no collision
+                // no collision
                 // console.log('no collision')
 
 
             })
+            //player collision
+            let playerDeath = checkForPlayerCollisions(player.playerData, player.PlayerConfig, players, player.socketId)
+            playerDeath.then((data) => {
+                console.log('player collision')
+                // every socket need to know the leaderboard has changed
+                io.sockets.emit('updateLeaderBoard', getLeaderBoard());
+            }).catch(() => {
+                // console.log("player not collide");
+            })
         }
     })
+    socket.on('disconnect', (data) => {
 
+    })
 })
+function getLeaderBoard() {
+    players.sort((a, b) => {
+        return b.score - a.score;
+    })
+    let leaderBoard = players.map((currPlayer) => {
+        return {
+            name: currPlayer.name,
+            score: currPlayer.score
+        }
+    })
+    return leaderboard
+}
 
 function initGame() {
     for (let i = 0; i < settings.defaultOrbs; i++) {
